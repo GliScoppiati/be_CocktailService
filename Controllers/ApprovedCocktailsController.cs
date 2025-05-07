@@ -23,6 +23,12 @@ public class ApprovedCocktailsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ImportApprovedCocktail([FromBody] ApprovedCocktailDto dto)
     {
+        if (dto == null)
+            return BadRequest("Payload non valido.");
+
+        if (dto.Ingredients == null)
+            dto.Ingredients = new List<ApprovedIngredientDto>();
+
         var normalizedCocktailName = Normalize(dto.Name);
 
         var cocktails = await _db.Cocktails.ToListAsync();
