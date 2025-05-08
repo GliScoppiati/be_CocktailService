@@ -39,6 +39,8 @@ public class ApprovedCocktailsController : ControllerBase
         if (cocktailExists)
             return BadRequest($"A cocktail with the name '{dto.Name}' already exists.");
 
+        var userId = dto.CreatedByUserId ?? "Unknown";
+
         var cocktail = new Cocktail
         {
             CocktailId = Guid.NewGuid(),
@@ -49,7 +51,7 @@ public class ApprovedCocktailsController : ControllerBase
             ImageUrl = dto.ImageUrl,
             IsAlcoholic = dto.IsAlcoholic,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = "ApprovedSubmission"
+            CreatedBy = userId 
         };
 
         _db.Cocktails.Add(cocktail);
@@ -58,16 +60,13 @@ public class ApprovedCocktailsController : ControllerBase
         {
             Ingredient? ingredient = null;
 
-            // ➡️ 1. Normalizza il nome proposto
             var normalizedIngredientName = Normalize(ingDto.ProposedName);
 
-            // ➡️ 2. Prova a trovare un ingrediente già esistente con quel NormalizedName
             ingredient = await _db.Ingredients
                 .FirstOrDefaultAsync(i => i.NormalizedName == normalizedIngredientName);
 
             if (ingredient == null)
             {
-                // ➡️ 3. Se non esiste, creane uno nuovo
                 ingredient = new Ingredient
                 {
                     IngredientId = Guid.NewGuid(),
@@ -78,7 +77,6 @@ public class ApprovedCocktailsController : ControllerBase
                 _db.Ingredients.Add(ingredient);
             }
 
-            // ➡️ 4. Mappa il cocktail con l'ingrediente
             _db.CocktailIngredients.Add(new CocktailIngredient
             {
                 CocktailIngredientId = Guid.NewGuid(),
@@ -104,6 +102,7 @@ public class ApprovedCocktailDto
     public string Category { get; set; } = string.Empty;
     public bool IsAlcoholic { get; set; }
     public string? ImageUrl { get; set; }
+    public string CreatedByUserId { get; set; } = string.Empty;
     public List<ApprovedIngredientDto> Ingredients { get; set; } = new();
 }
 
