@@ -116,6 +116,13 @@ builder.Services.AddScoped<CocktailImportSyncService>();
 
 var app = builder.Build();
 
+// 🛎️ AUTO-MIGRATION E CREAZIONE DATABASE
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CocktailDbContext>();
+    db.Database.Migrate(); // Applica migrazioni → crea il db se non esiste
+}
+
 // 🚦 Pipeline
 if (app.Environment.IsDevelopment())
 {
