@@ -120,7 +120,28 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CocktailDbContext>();
-    db.Database.Migrate(); // Applica migrazioni → crea il db se non esiste
+    var maxRetries = 10;
+    var retries = 0;
+
+    while (true)
+    {
+        try
+        {
+            db.Database.Migrate();
+            Console.WriteLine("✅ Migration completata.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            retries++;
+            Console.WriteLine($"⏳ Tentativo {retries}/10: il DB non è ancora pronto... {ex.Message}");
+
+            if (retries >= maxRetries)
+                throw;
+
+            Thread.Sleep(2000); // aspetta 2 secondi prima di riprovare
+        }
+    }
 }
 
 // 🚦 Pipeline
