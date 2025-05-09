@@ -7,7 +7,9 @@ using CocktailService.Clients;
 namespace CocktailService.Controllers;
 
 [ApiController]
-[Route("ingredients-map")]
+// ROUTE MULTIPLA per compatibilità vecchie e nuove
+[Route("cocktail/ingredients")]
+[Route("cocktail/ingredients-map")]
 public class CocktailIngredientsController : ControllerBase
 {
     private readonly CocktailDbContext _db;
@@ -19,7 +21,7 @@ public class CocktailIngredientsController : ControllerBase
         _cocktailIngredientsClient = cocktailIngredientsClient;
     }
 
-    // ✅ IMPORTA CocktailIngredient da CocktailImportService (SOLO ADMIN)
+    // ✅ IMPORT CocktailIngredients → /ingredients-map/import e /cocktail/ingredients/import
     [Authorize(Roles = "Admin")]
     [HttpPost("import")]
     public async Task<IActionResult> Import()
@@ -46,11 +48,10 @@ public class CocktailIngredientsController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
-
         return Ok("Import completed.");
     }
 
-    // ✅ LISTA CocktailIngredient (pubblico → serve per ricostruire i cocktail e le dosi)
+    // ✅ LISTA CocktailIngredients → /ingredients-map e /cocktail/ingredients
     [HttpGet]
     public async Task<ActionResult<List<CocktailIngredient>>> GetAll()
     {

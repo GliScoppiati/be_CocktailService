@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using CocktailService.Models;
 using CocktailService.Importers;
 using CocktailService.Clients;
+using CocktailService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -113,6 +114,7 @@ builder.Services.AddHttpClient<ImportCocktailIngredientsClient>(client =>
 
 // 📌 Sync Service
 builder.Services.AddScoped<CocktailImportSyncService>();
+builder.Services.AddScoped<CocktailManager>();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using CocktailService.Models;
 
 namespace CocktailService.Controllers;
@@ -94,21 +95,21 @@ public class ApprovedCocktailsController : ControllerBase
     }
 }
 
-public class ApprovedCocktailDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Instructions { get; set; } = string.Empty;
-    public string Glass { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public bool IsAlcoholic { get; set; }
-    public string? ImageUrl { get; set; }
-    public string CreatedByUserId { get; set; } = string.Empty;
-    public List<ApprovedIngredientDto> Ingredients { get; set; } = new();
-}
+// public class ApprovedCocktailDto
+// {
+//     public string Name { get; set; } = string.Empty;
+//     public string Instructions { get; set; } = string.Empty;
+//     public string Glass { get; set; } = string.Empty;
+//     public string Category { get; set; } = string.Empty;
+//     public bool IsAlcoholic { get; set; }
+//     public string? ImageUrl { get; set; }
+//     public string CreatedByUserId { get; set; } = string.Empty;
+//     public List<ApprovedIngredientDto> Ingredients { get; set; } = new();
+// }
 
-public class ApprovedIngredientDto
-{
-    public Guid IngredientId { get; set; } = Guid.Empty;
-    public string ProposedName { get; set; } = string.Empty;
-    public string Quantity { get; set; } = string.Empty;
-}
+// public class ApprovedIngredientDto
+// {
+//     public Guid IngredientId { get; set; } = Guid.Empty;
+//     public string ProposedName { get; set; } = string.Empty;
+//     public string Quantity { get; set; } = string.Empty;
+// }
