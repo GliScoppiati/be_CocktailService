@@ -6,30 +6,22 @@ namespace CocktailService.Clients;
 public class ApiIngredientsClient
 {
     private readonly HttpClient _http;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ApiIngredientsClient(HttpClient http, IHttpContextAccessor httpContextAccessor)
+    public ApiIngredientsClient(HttpClient http)
     {
         _http = http;
-        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<List<Ingredient>> GetIngredientsAsync()
     {
-        AddAuthorizationHeader();
-
-        var result = await _http.GetFromJsonAsync<List<Ingredient>>("/ingredients");
-
-        return result ?? new List<Ingredient>();
-    }
-
-    private void AddAuthorizationHeader()
-    {
-        var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
-
-        if (!string.IsNullOrEmpty(token))
+        try
         {
-            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Replace("Bearer ", ""));
+            var result = await _http.GetFromJsonAsync<List<Ingredient>>("/ingredients");
+            return result ?? new();
+        }
+        catch
+        {
+            return new();
         }
     }
 }

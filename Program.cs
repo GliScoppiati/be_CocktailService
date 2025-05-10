@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using CocktailService.Models;
-using CocktailService.Importers;
-using CocktailService.Clients;
-using CocktailService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using CocktailService.Models;
+using CocktailService.Importers;
+using CocktailService.Clients;
+using CocktailService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,22 +21,18 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Bearer token",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Name        = "Authorization",
+        In          = ParameterLocation.Header,
+        Type        = SecuritySchemeType.ApiKey,
+        Scheme      = "Bearer"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
                 Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
@@ -44,88 +40,110 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // 📌 PostgreSQL
-builder.Services.AddDbContext<CocktailDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<CocktailDbContext>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 📌 JWT Authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var keyBytes = Encoding.ASCII.GetBytes(jwtSection["Key"]!);
+var keyBytes   = Encoding.ASCII.GetBytes(jwtSection["Key"]!);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
         opt.RequireHttpsMetadata = false;
-        opt.SaveToken = true;
+        opt.SaveToken            = true;
         opt.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSection["Issuer"],
-            ValidAudience = jwtSection["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+            ValidIssuer              = jwtSection["Issuer"],
+            ValidAudience            = jwtSection["Audience"],
+            IssuerSigningKey         = new SymmetricSecurityKey(keyBytes)
         };
     });
 
 builder.Services.AddAuthorization();
 
 // 📌 CORS (per ora aperto → puoi chiuderlo in produzione)
-builder.Services.AddCors(options =>
+builder.Services.AddCors(o =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+    o.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
+                                  .AllowAnyHeader()
+                                  .AllowAnyMethod());
 });
 
-// 📌 HttpContextAccessor → utile per recuperare userId/token
+//HttpClient + Handlers 
 builder.Services.AddHttpContextAccessor();
 
-// 📌 HttpClient CLIENTS (Controllers → ImportService)
-builder.Services.AddHttpClient<ApiIngredientsClient>(client =>
-{
-    client.BaseAddress = new Uri("http://cocktail-import-service");
-});
-builder.Services.AddHttpClient<ApiCocktailsClient>(client =>
-{
-    client.BaseAddress = new Uri("http://cocktail-import-service");
-});
-builder.Services.AddHttpClient<ApiCocktailIngredientsClient>(client =>
-{
-    client.BaseAddress = new Uri("http://cocktail-import-service");
-});
+builder.Services.AddTransient<ClearAuthHeaderHandler>(); // pulisce eventuale header utente
+builder.Services.AddTransient<JwtServiceHandler>();       // firma token role=Service
 
-// 📌 HttpClient IMPORTERS (Sync Service)
-builder.Services.AddHttpClient<ImportIngredientsClient>(client =>
+// --- CLIENTS usati dai controller (export da Import‑Service) ---
+builder.Services.AddHttpClient<ApiIngredientsClient>(c =>
 {
-    client.BaseAddress = new Uri("http://cocktail-import-service");
-});
-builder.Services.AddHttpClient<ImportCocktailsClient>(client =>
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+})
+.AddHttpMessageHandler<ClearAuthHeaderHandler>()
+.AddHttpMessageHandler<JwtServiceHandler>();
+
+builder.Services.AddHttpClient<ApiCocktailsClient>(c =>
 {
-    client.BaseAddress = new Uri("http://cocktail-import-service");
-});
-builder.Services.AddHttpClient<ImportCocktailIngredientsClient>(client =>
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+})
+.AddHttpMessageHandler<ClearAuthHeaderHandler>()
+.AddHttpMessageHandler<JwtServiceHandler>();
+
+builder.Services.AddHttpClient<ApiCocktailIngredientsClient>(c =>
 {
-    client.BaseAddress = new Uri("http://cocktail-import-service");
-});
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+})
+.AddHttpMessageHandler<ClearAuthHeaderHandler>()
+.AddHttpMessageHandler<JwtServiceHandler>();
+
+// --- CLIENT tipizzato verso Search‑Service (per trigger reload) ---
+builder.Services.AddHttpClient<SearchSyncClient>(c =>
+{
+    c.BaseAddress = new Uri("http://search-service");
+})
+.AddHttpMessageHandler<JwtServiceHandler>();
+
+// --- CLIENTS usati dall’import “sincronizzato” (background o /import/all) ---
+builder.Services.AddHttpClient<ImportIngredientsClient>(c =>
+{
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+})
+.AddHttpMessageHandler<ClearAuthHeaderHandler>()
+.AddHttpMessageHandler<JwtServiceHandler>();
+
+builder.Services.AddHttpClient<ImportCocktailsClient>(c =>
+{
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+})
+.AddHttpMessageHandler<ClearAuthHeaderHandler>()
+.AddHttpMessageHandler<JwtServiceHandler>();
+
+builder.Services.AddHttpClient<ImportCocktailIngredientsClient>(c =>
+{
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+})
+.AddHttpMessageHandler<ClearAuthHeaderHandler>()
+.AddHttpMessageHandler<JwtServiceHandler>();
 
 // 📌 Sync Service
 builder.Services.AddScoped<CocktailImportSyncService>();
 builder.Services.AddScoped<CocktailManager>();
+builder.Services.AddScoped<ImportFacadeService>();
 
 var app = builder.Build();
 
 // 🛎️ AUTO-MIGRATION E CREAZIONE DATABASE
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<CocktailDbContext>();
-    var maxRetries = 10;
-    var retries = 0;
-
-    while (true)
+    var db   = scope.ServiceProvider.GetRequiredService<CocktailDbContext>();
+    int max  = 10;
+    for (int attempt = 1; attempt <= max; attempt++)
     {
         try
         {
@@ -133,15 +151,10 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("✅ Migration completata.");
             break;
         }
-        catch (Exception ex)
+        catch when (attempt < max)
         {
-            retries++;
-            Console.WriteLine($"⏳ Tentativo {retries}/10: il DB non è ancora pronto... {ex.Message}");
-
-            if (retries >= maxRetries)
-                throw;
-
-            Thread.Sleep(2000); // aspetta 2 secondi prima di riprovare
+            Console.WriteLine($"⏳ DB non pronto… ritento ({attempt}/{max})");
+            Thread.Sleep(2000);
         }
     }
 }
@@ -153,11 +166,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");       // 💡 IMPORTANTISSIMO → prima di Auth
+app.UseCors("AllowAll");   // 💡 IMPORTANTISSIMO → prima di Auth
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine("🍹 CocktailService avviato su: " + builder.Configuration["ASPNETCORE_URLS"]);
+Console.WriteLine("🍹 CocktailService avviato.");
 app.Run();

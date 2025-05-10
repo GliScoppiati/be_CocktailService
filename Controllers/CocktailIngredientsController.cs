@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CocktailService.Models;
 using CocktailService.Clients;
+using CocktailService.Services;
 
 namespace CocktailService.Controllers;
 
@@ -14,11 +15,13 @@ public class CocktailIngredientsController : ControllerBase
 {
     private readonly CocktailDbContext _db;
     private readonly ApiCocktailIngredientsClient _cocktailIngredientsClient;
+    private readonly SearchSyncClient  _sync;          
 
-    public CocktailIngredientsController(CocktailDbContext db, ApiCocktailIngredientsClient cocktailIngredientsClient)
+    public CocktailIngredientsController(CocktailDbContext db, ApiCocktailIngredientsClient cocktailIngredientsClient, SearchSyncClient sync)
     {
         _db = db;
         _cocktailIngredientsClient = cocktailIngredientsClient;
+        _sync = sync;
     }
 
     // ✅ IMPORT CocktailIngredients → /ingredients-map/import e /cocktail/ingredients/import
@@ -48,6 +51,7 @@ public class CocktailIngredientsController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
+        _ = _sync.TriggerReloadAsync();
         return Ok("Import completed.");
     }
 

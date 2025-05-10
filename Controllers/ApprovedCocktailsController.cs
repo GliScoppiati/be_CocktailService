@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using CocktailService.Models;
+using CocktailService.Services;
 
 namespace CocktailService.Controllers;
 
@@ -11,10 +12,12 @@ namespace CocktailService.Controllers;
 public class ApprovedCocktailsController : ControllerBase
 {
     private readonly CocktailDbContext _db;
+    private readonly SearchSyncClient _sync;
 
-    public ApprovedCocktailsController(CocktailDbContext db)
+    public ApprovedCocktailsController(CocktailDbContext db, SearchSyncClient sync)
     {
         _db = db;
+        _sync = sync;
     }
 
     private static string Normalize(string? value) =>
@@ -90,6 +93,7 @@ public class ApprovedCocktailsController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
+        _ = _sync.TriggerReloadAsync();
 
         return Ok("Approved cocktail imported successfully.");
     }

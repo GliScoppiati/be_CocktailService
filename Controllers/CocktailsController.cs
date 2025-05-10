@@ -14,15 +14,18 @@ public class CocktailsController : ControllerBase
     private readonly CocktailDbContext _db;
     private readonly ApiCocktailsClient _cocktailsClient;
     private readonly CocktailManager _cocktailManager;
+    private readonly SearchSyncClient  _sync;
 
     public CocktailsController(
         CocktailDbContext db,
         ApiCocktailsClient cocktailsClient,
-        CocktailManager cocktailManager)
+        CocktailManager cocktailManager,
+        SearchSyncClient sync)
     {
         _db = db;
         _cocktailsClient = cocktailsClient;
         _cocktailManager = cocktailManager;
+        _sync = sync;
     }
 
     // ✅ IMPORT da CocktailImportService (solo ADMIN)
@@ -53,6 +56,7 @@ public class CocktailsController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
+        _ = _sync.TriggerReloadAsync();
         return Ok("Import completed");
     }
 

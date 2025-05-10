@@ -6,10 +6,12 @@ namespace CocktailService.Services;
 public class CocktailManager
 {
     private readonly CocktailDbContext _db;
+    private readonly SearchSyncClient _sync;
 
-    public CocktailManager(CocktailDbContext db)
+    public CocktailManager(CocktailDbContext db, SearchSyncClient sync)
     {
         _db = db;
+        _sync = sync;
     }
 
     public async Task<Guid> CreateCocktailAsync(ApprovedCocktailDto dto, string userId)
@@ -32,6 +34,8 @@ public class CocktailManager
         await HandleIngredientsAsync(dto.Ingredients, cocktail.CocktailId);
 
         await _db.SaveChangesAsync();
+        _ = _sync.TriggerReloadAsync();
+        
         return cocktail.CocktailId;
     }
 
