@@ -34,6 +34,7 @@ public class CocktailsController : ControllerBase
     public async Task<IActionResult> Import()
     {
         var imported = await _cocktailsClient.GetCocktailsAsync();
+        int importedCount = 0;
 
         foreach (var c in imported)
         {
@@ -52,16 +53,24 @@ public class CocktailsController : ControllerBase
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = "import"
                 });
+                importedCount++;
             }
         }
 
         await _db.SaveChangesAsync();
         _ = _sync.TriggerReloadAsync();
-        return Ok("Import completed");
+
+        return Ok(new
+        {
+            message = "Import completed",
+            importedCount = importedCount,
+            importedAt = DateTime.UtcNow
+        });
     }
 
     // ✅ LISTA cocktail (pubblico)
     [HttpGet]
+    [Authorize(Policy = "AdminOrService")]
     public async Task<ActionResult<List<Cocktail>>> GetAll()
     {
         var cocktails = await _db.Cocktails

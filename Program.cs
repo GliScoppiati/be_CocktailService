@@ -64,7 +64,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOrService", policy =>
+        policy.RequireRole("Admin", "Service"));
+});
 
 // 📌 CORS (per ora aperto → puoi chiuderlo in produzione)
 builder.Services.AddCors(o =>
@@ -108,7 +112,7 @@ builder.Services.AddHttpClient<SearchSyncClient>(c =>
     c.BaseAddress = new Uri("http://search-service");
 })
 .AddHttpMessageHandler<JwtServiceHandler>();
-
+Console.WriteLine("🧪 SearchSyncClient configurato con JWT handler."); //TODO debug
 // --- CLIENTS usati dall’import “sincronizzato” (background o /import/all) ---
 builder.Services.AddHttpClient<ImportIngredientsClient>(c =>
 {

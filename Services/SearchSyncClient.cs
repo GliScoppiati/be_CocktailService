@@ -10,5 +10,8 @@ public class SearchSyncClient
     public SearchSyncClient(HttpClient http) => _http = http;
 
     public Task TriggerReloadAsync()
-        => _http.PostAsync("/cocktails/reload/now", null);   // body vuoto
+    {
+        Console.WriteLine("🔁 Chiamata HTTP a /cocktails/reload/now");
+        return _http.PostAsync("/cocktails/reload/now", null);
+    }
 }

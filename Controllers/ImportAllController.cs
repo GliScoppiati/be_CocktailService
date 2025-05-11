@@ -17,6 +17,10 @@ public class ImportAllController : ControllerBase
     public async Task<IActionResult> ImportAll()
     {
         await _facade.RunFullImportAsync();
-        return Ok("Full import completed."); //[todo]
+        return Ok(new
+        {
+            message = "Full import completed.",
+            importedAt = DateTime.UtcNow
+        });
     }
 }

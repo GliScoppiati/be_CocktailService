@@ -12,13 +12,19 @@ public class JwtServiceHandler : DelegatingHandler
     private string? _cached;
     private DateTime _expiresUtc;
 
-    public JwtServiceHandler(IConfiguration cfg) => _cfg = cfg;
+    public JwtServiceHandler(IConfiguration cfg)
+    {
+        _cfg = cfg;
+        Console.WriteLine("🛠️ JwtServiceHandler istanziato!");
+    }
 
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage req, CancellationToken ct)
     {
         if (_cached is null || DateTime.UtcNow >= _expiresUtc)
             GenerateToken();
+
+        Console.WriteLine("🔐 Generated JWT: " + _cached);
 
         req.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", _cached);

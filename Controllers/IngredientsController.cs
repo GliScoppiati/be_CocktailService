@@ -8,7 +8,8 @@ using CocktailService.Services;
 namespace CocktailService.Controllers;
 
 [ApiController]
-[Route("ingredients")]
+[Authorize]
+[Route("cocktail/ingredients")]
 public class IngredientsController : ControllerBase
 {
     private readonly CocktailDbContext _db;
@@ -28,6 +29,7 @@ public class IngredientsController : ControllerBase
     public async Task<IActionResult> Import()
     {
         var imported = await _ingredientsClient.GetIngredientsAsync();
+        int importedCount = 0;
 
         foreach (var i in imported)
         {
@@ -40,12 +42,19 @@ public class IngredientsController : ControllerBase
                     Name = i.Name,
                     NormalizedName = i.NormalizedName
                 });
+                importedCount++;
             }
         }
 
         await _db.SaveChangesAsync();
         _ = _sync.TriggerReloadAsync();
-        return Ok("Import completed");
+
+        return Ok(new
+        {
+            message = "Ingredients import completed",
+            importedCount = importedCount,
+            importedAt = DateTime.UtcNow
+        });
     }
 
     // ✅ LISTA tutti gli ingredienti disponibili (pubblico)

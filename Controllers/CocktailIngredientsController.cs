@@ -8,8 +8,7 @@ using CocktailService.Services;
 namespace CocktailService.Controllers;
 
 [ApiController]
-// ROUTE MULTIPLA per compatibilità vecchie e nuove
-[Route("cocktail/ingredients")]
+[Authorize(Policy = "AdminOrService")]
 [Route("cocktail/ingredients-map")]
 public class CocktailIngredientsController : ControllerBase
 {
@@ -52,11 +51,17 @@ public class CocktailIngredientsController : ControllerBase
 
         await _db.SaveChangesAsync();
         _ = _sync.TriggerReloadAsync();
-        return Ok("Import completed.");
+        return Ok(new
+        {
+            message = "Cocktail-ingredient map import completed.",
+            importedCount = _db.CocktailIngredients.Count(), // totale attuale dopo import
+            importedAt = DateTime.UtcNow
+        });
     }
 
     // ✅ LISTA CocktailIngredients → /ingredients-map e /cocktail/ingredients
     [HttpGet]
+    [Authorize(Policy = "AdminOrService")]
     public async Task<ActionResult<List<CocktailIngredient>>> GetAll()
     {
         var ingredientsMap = await _db.CocktailIngredients

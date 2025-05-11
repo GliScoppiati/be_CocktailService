@@ -95,7 +95,13 @@ public class ApprovedCocktailsController : ControllerBase
         await _db.SaveChangesAsync();
         _ = _sync.TriggerReloadAsync();
 
-        return Ok("Approved cocktail imported successfully.");
+        return Ok(new
+        {
+            message = "Approved cocktail imported successfully.",
+            cocktailId = cocktail.CocktailId,
+            name = cocktail.Name,
+            createdAt = cocktail.CreatedAt
+        });
     }
 }
 
