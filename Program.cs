@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using CocktailService.Models;
 using CocktailService.Importers;
@@ -31,8 +32,7 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
@@ -78,13 +78,13 @@ builder.Services.AddCors(o =>
                                   .AllowAnyMethod());
 });
 
-//HttpClient + Handlers 
+// HttpClient + Handlers 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddTransient<ClearAuthHeaderHandler>(); // pulisce eventuale header utente
-builder.Services.AddTransient<JwtServiceHandler>();       // firma token role=Service
+builder.Services.AddTransient<ClearAuthHeaderHandler>();
+builder.Services.AddTransient<JwtServiceHandler>();
 
-// --- CLIENTS usati dai controller (export da Import‑Service) ---
+// --- CLIENTS usati dai controller (export da Import-Service) ---
 builder.Services.AddHttpClient<ApiIngredientsClient>(c =>
 {
     c.BaseAddress = new Uri("http://cocktail-import-service");
@@ -106,59 +106,48 @@ builder.Services.AddHttpClient<ApiCocktailIngredientsClient>(c =>
 .AddHttpMessageHandler<ClearAuthHeaderHandler>()
 .AddHttpMessageHandler<JwtServiceHandler>();
 
-// --- CLIENT tipizzato verso Search‑Service (per trigger reload) ---
+// --- CLIENT tipizzato verso Search-Service (per trigger reload) ---
 builder.Services.AddHttpClient<SearchSyncClient>(c =>
 {
     c.BaseAddress = new Uri("http://search-service");
 })
 .AddHttpMessageHandler<JwtServiceHandler>();
-Console.WriteLine("🧪 SearchSyncClient configurato con JWT handler."); //TODO debug
-// --- CLIENTS usati dall’import “sincronizzato” (background o /import/all) ---
-builder.Services.AddHttpClient<ImportIngredientsClient>(c =>
-{
-    c.BaseAddress = new Uri("http://cocktail-import-service");
-})
-.AddHttpMessageHandler<ClearAuthHeaderHandler>()
-.AddHttpMessageHandler<JwtServiceHandler>();
-
-builder.Services.AddHttpClient<ImportCocktailsClient>(c =>
-{
-    c.BaseAddress = new Uri("http://cocktail-import-service");
-})
-.AddHttpMessageHandler<ClearAuthHeaderHandler>()
-.AddHttpMessageHandler<JwtServiceHandler>();
-
-builder.Services.AddHttpClient<ImportCocktailIngredientsClient>(c =>
-{
-    c.BaseAddress = new Uri("http://cocktail-import-service");
-})
-.AddHttpMessageHandler<ClearAuthHeaderHandler>()
-.AddHttpMessageHandler<JwtServiceHandler>();
-
-// 📌 Sync Service
-builder.Services.AddScoped<CocktailImportSyncService>();
-builder.Services.AddScoped<CocktailManager>();
-builder.Services.AddScoped<ImportFacadeService>();
 
 var app = builder.Build();
+
+// Recupero il logger di Program
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 // 🛎️ AUTO-MIGRATION E CREAZIONE DATABASE
 using (var scope = app.Services.CreateScope())
 {
-    var db   = scope.ServiceProvider.GetRequiredService<CocktailDbContext>();
-    int max  = 10;
+    var db     = scope.ServiceProvider.GetRequiredService<CocktailDbContext>();
+    var logCtx = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    int max    = 10;
     for (int attempt = 1; attempt <= max; attempt++)
     {
         try
         {
             db.Database.Migrate();
-            Console.WriteLine("✅ Migration completata.");
+            logCtx.LogInformation("[CocktailService] ✅ Migration completata.");
             break;
         }
-        catch when (attempt < max)
+        catch (Exception ex) when (attempt < max)
         {
-            Console.WriteLine($"⏳ DB non pronto… ritento ({attempt}/{max})");
-            Thread.Sleep(2000);
+            logCtx.LogWarning(
+                "[CocktailService] ⏳ DB non pronto… ritento ({Attempt}/{MaxAttempts})",
+                attempt,
+                max
+            );
+            await Task.Delay(2000);
+        }
+        catch (Exception ex)
+        {
+            logCtx.LogError(
+                ex,
+                "[CocktailService] ❌ Errore irreversibile durante la migrazione"
+            );
+            throw;
         }
     }
 }
@@ -176,5 +165,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine("🍹 CocktailService avviato.");
+// Logging della configurazione del SearchSyncClient
+logger.LogDebug("[CocktailService] 🧪 SearchSyncClient configurato con JWT handler.");
+
+// Avvio dell'applicazione
+logger.LogInformation("[CocktailService] 🍹 CocktailService avviato.");
+
 app.Run();

@@ -30,19 +30,39 @@ public class GetCocktailByCreatorController : ControllerBase
         string normName = name.Trim().ToLowerInvariant();
         string normUser = username.Trim().ToLowerInvariant();
 
-        var cocktail = await _db.Cocktails
-            .Where(c => c.CreatedBy.ToLower() == normUser && c.Name.ToLower() == normName)
-            .Select(c => new
-            {
-                cocktailId = c.CocktailId,
-                name       = c.Name,
-                createdBy  = c.CreatedBy
-            })
-            .FirstOrDefaultAsync();
+        if (normUser == "anon")
+        {
+            var cocktails = await _db.Cocktails
+                .Where(c => c.Name.ToLower() == normName)
+                .Select(c => new
+                {
+                    cocktailId = c.CocktailId,
+                    name       = c.Name,
+                    createdBy  = c.CreatedBy
+                })
+                .ToListAsync();
 
-        if (cocktail == null)
-            return NotFound("Nessun cocktail trovato per questo autore e nome.");
+            if (!cocktails.Any())
+                return NotFound("Nessun cocktail trovato con questo nome.");
 
-        return Ok(cocktail);
+            return Ok(cocktails);
+        }
+        else
+        {
+            var cocktail = await _db.Cocktails
+                .Where(c => c.CreatedBy.ToLower() == normUser && c.Name.ToLower() == normName)
+                .Select(c => new
+                {
+                    cocktailId = c.CocktailId,
+                    name       = c.Name,
+                    createdBy  = c.CreatedBy
+                })
+                .FirstOrDefaultAsync();
+
+            if (cocktail == null)
+                return NotFound("Nessun cocktail trovato per questo autore e nome.");
+
+            return Ok(cocktail);
+        }
     }
 }
