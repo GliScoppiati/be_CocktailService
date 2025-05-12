@@ -14,7 +14,7 @@ public class CocktailsController : ControllerBase
     private readonly CocktailDbContext _db;
     private readonly ApiCocktailsClient _cocktailsClient;
     private readonly CocktailManager _cocktailManager;
-    private readonly SearchSyncClient  _sync;
+    private readonly SearchSyncClient _sync;
 
     public CocktailsController(
         CocktailDbContext db,

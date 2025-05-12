@@ -14,7 +14,7 @@ public class IngredientsController : ControllerBase
 {
     private readonly CocktailDbContext _db;
     private readonly ApiIngredientsClient _ingredientsClient;
-    private readonly SearchSyncClient  _sync; 
+    private readonly SearchSyncClient _sync;
 
     public IngredientsController(CocktailDbContext db, ApiIngredientsClient ingredientsClient, SearchSyncClient sync)
     {

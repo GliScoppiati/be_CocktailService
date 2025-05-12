@@ -55,7 +55,7 @@ public class ApprovedCocktailsController : ControllerBase
             ImageUrl = dto.ImageUrl,
             IsAlcoholic = dto.IsAlcoholic,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = userId 
+            CreatedBy = userId
         };
 
         _db.Cocktails.Add(cocktail);

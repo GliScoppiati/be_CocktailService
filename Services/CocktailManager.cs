@@ -35,7 +35,7 @@ public class CocktailManager
 
         await _db.SaveChangesAsync();
         _ = _sync.TriggerReloadAsync();
-        
+
         return cocktail.CocktailId;
     }
 

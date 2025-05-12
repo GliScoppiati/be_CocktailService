@@ -37,8 +37,8 @@ public class GetCocktailByCreatorController : ControllerBase
                 .Select(c => new
                 {
                     cocktailId = c.CocktailId,
-                    name       = c.Name,
-                    createdBy  = c.CreatedBy
+                    name = c.Name,
+                    createdBy = c.CreatedBy
                 })
                 .ToListAsync();
 
@@ -54,8 +54,8 @@ public class GetCocktailByCreatorController : ControllerBase
                 .Select(c => new
                 {
                     cocktailId = c.CocktailId,
-                    name       = c.Name,
-                    createdBy  = c.CreatedBy
+                    name = c.Name,
+                    createdBy = c.CreatedBy
                 })
                 .FirstOrDefaultAsync();
 

@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CocktailService.Migrations
+namespace CocktailService.CocktailService.Migrations
 {
     [DbContext(typeof(CocktailDbContext))]
-    [Migration("20250508090327_field")]
-    partial class field
+    [Migration("20250512033526_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

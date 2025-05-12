@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 
 namespace CocktailService.Models
 {
@@ -7,10 +8,15 @@ namespace CocktailService.Models
     {
         public CocktailDbContext CreateDbContext(string[] args)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<CocktailDbContext>();
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
 
-            // Inserisci qui la connection string per le migration
-            optionsBuilder.UseNpgsql("Host=localhost;Database=cocktail_db;Username=postgres;Password=postgres");
+            var connectionString = config.GetConnectionString("DefaultConnection");
+
+            var optionsBuilder = new DbContextOptionsBuilder<CocktailDbContext>();
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new CocktailDbContext(optionsBuilder.Options);
         }

@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CocktailService.Migrations
+namespace CocktailService.CocktailService.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,13 +18,13 @@ namespace CocktailService.Migrations
                     CocktailId = table.Column<Guid>(type: "uuid", nullable: false),
                     OrigId = table.Column<string>(type: "text", nullable: true),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
+                    Instructions = table.Column<string>(type: "text", nullable: true),
                     Category = table.Column<string>(type: "text", nullable: false),
                     Glass = table.Column<string>(type: "text", nullable: false),
                     IsAlcoholic = table.Column<bool>(type: "boolean", nullable: false),
                     ImageUrl = table.Column<string>(type: "text", nullable: true),
                     SourceType = table.Column<int>(type: "integer", nullable: false),
-                    CreatedByUserId = table.Column<string>(type: "text", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -56,6 +56,8 @@ namespace CocktailService.Migrations
                     CocktailIngredientId = table.Column<Guid>(type: "uuid", nullable: false),
                     CocktailId = table.Column<Guid>(type: "uuid", nullable: false),
                     IngredientId = table.Column<Guid>(type: "uuid", nullable: false),
+                    QuantityValue = table.Column<decimal>(type: "numeric", nullable: true),
+                    QuantityUnit = table.Column<string>(type: "text", nullable: true),
                     OriginalMeasure = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>

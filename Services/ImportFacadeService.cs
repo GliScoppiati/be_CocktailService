@@ -6,13 +6,13 @@ namespace CocktailService.Services;
 public class ImportFacadeService
 {
     private readonly CocktailImportSyncService _syncService;
-    private readonly SearchSyncClient          _search;
+    private readonly SearchSyncClient _search;
 
     public ImportFacadeService(CocktailImportSyncService syncService,
-                               SearchSyncClient          search)
+                               SearchSyncClient search)
     {
         _syncService = syncService;
-        _search      = search;
+        _search = search;
     }
 
     public async Task RunFullImportAsync()
