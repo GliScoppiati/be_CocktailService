@@ -78,9 +78,8 @@ builder.Services.AddCors(o =>
                                   .AllowAnyMethod());
 });
 
-// HttpClient + Handlers 
+// 📌 Handlers + HttpContext
 builder.Services.AddHttpContextAccessor();
-
 builder.Services.AddTransient<ClearAuthHeaderHandler>();
 builder.Services.AddTransient<JwtServiceHandler>();
 
@@ -106,17 +105,31 @@ builder.Services.AddHttpClient<ApiCocktailIngredientsClient>(c =>
 .AddHttpMessageHandler<ClearAuthHeaderHandler>()
 .AddHttpMessageHandler<JwtServiceHandler>();
 
-// --- CLIENT tipizzato verso Search-Service (per trigger reload) ---
+// --- CLIENTS usati da ImportFacadeService ---
+builder.Services.AddHttpClient<ImportIngredientsClient>(c =>
+{
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+}).AddHttpMessageHandler<JwtServiceHandler>();
+
+builder.Services.AddHttpClient<ImportCocktailsClient>(c =>
+{
+    c.BaseAddress = new Uri("http://cocktail-import-service");
+}).AddHttpMessageHandler<JwtServiceHandler>();
+
+// --- CLIENT per trigger SearchService ---
 builder.Services.AddHttpClient<SearchSyncClient>(c =>
 {
     c.BaseAddress = new Uri("http://search-service");
 })
 .AddHttpMessageHandler<JwtServiceHandler>();
 
-var app = builder.Build();
+// --- SERVICES ---
+builder.Services.AddScoped<CocktailManager>();
+builder.Services.AddScoped<CocktailImportSyncService>();
+builder.Services.AddScoped<ImportFacadeService>();
 
-// Recupero il logger di Program
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
+// --- APP ---
+var app = builder.Build();
 
 // 🛎️ AUTO-MIGRATION E CREAZIONE DATABASE
 using (var scope = app.Services.CreateScope())
@@ -159,16 +172,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");   // 💡 IMPORTANTISSIMO → prima di Auth
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Logging della configurazione del SearchSyncClient
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogDebug("[CocktailService] 🧪 SearchSyncClient configurato con JWT handler.");
-
-// Avvio dell'applicazione
 logger.LogInformation("[CocktailService] 🍹 CocktailService avviato.");
 
 app.Run();

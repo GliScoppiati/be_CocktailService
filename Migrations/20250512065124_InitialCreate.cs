@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CocktailService.CocktailService.Migrations
+namespace CocktailService.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

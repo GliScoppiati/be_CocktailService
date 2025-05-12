@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CocktailService.CocktailService.Migrations
+namespace CocktailService.Migrations
 {
     [DbContext(typeof(CocktailDbContext))]
     partial class CocktailDbContextModelSnapshot : ModelSnapshot
